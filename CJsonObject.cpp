@@ -424,35 +424,25 @@ bool CJsonObject::Parse(const std::string& strJson)
     return(true);
 }
 
+// Clear不应该删除和重建根节点，因为使用者很容易对一个CJsonObject先Clear然后再Add，
+// 而旧版代码会导致Clear的根节点变更，进而导致Clear和Add操作的不是同一个CJsonObject内存对象
 void CJsonObject::Clear()
 {
-    m_pExternJsonDataRef = NULL;
-    if (m_pJsonData != NULL)
-    {
-        cJSON_Delete(m_pJsonData);
-        m_pJsonData = NULL;
-    }
-    for (std::map<unsigned int, CJsonObject*>::iterator iter = m_mapJsonArrayRef.begin();
-                    iter != m_mapJsonArrayRef.end(); ++iter)
-    {
-        if (iter->second != NULL)
-        {
-            delete (iter->second);
-            iter->second = NULL;
-        }
-    }
-    m_mapJsonArrayRef.clear();
-    for (std::map<std::string, CJsonObject*>::iterator iter = m_mapJsonObjectRef.begin();
-                    iter != m_mapJsonObjectRef.end(); ++iter)
-    {
-        if (iter->second != NULL)
-        {
-            delete (iter->second);
-            iter->second = NULL;
-        }
-    }
-    m_mapJsonObjectRef.clear();
-    m_listKeys.clear();
+	if (!IsArray())
+	{
+		std::string strKey;
+		do
+		{
+			ResetTraversing(); 
+			if (!GetKey(strKey))
+				break;
+			Delete(strKey);
+		} while (true);
+	}
+	else
+	{
+		while (GetArraySize()>0)Delete(0);
+	}
 }
 
 bool CJsonObject::IsEmpty() const
