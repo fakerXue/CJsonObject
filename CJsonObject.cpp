@@ -424,13 +424,18 @@ bool CJsonObject::Parse(const std::string& strJson)
     return(true);
 }
 
+// 修改前存在的bug：若使用数组的引用调用Clear，会导致原数组对象被销毁，因而实际上是创建了一个新的数组，此时，当再次使用Add等函数时，操作的已不再是原始数组对象
 void CJsonObject::Clear()
 {
-    m_pExternJsonDataRef = NULL;
     if (m_pJsonData != NULL)
     {
         cJSON_Delete(m_pJsonData);
         m_pJsonData = NULL;
+    }
+    else if(m_pExternJsonDataRef != NULL)
+    {
+        cJSON_Delete(m_pExternJsonDataRef);
+        m_pExternJsonDataRef = NULL;
     }
     for (std::map<unsigned int, CJsonObject*>::iterator iter = m_mapJsonArrayRef.begin();
                     iter != m_mapJsonArrayRef.end(); ++iter)
